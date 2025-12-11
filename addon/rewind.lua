@@ -73,7 +73,7 @@ local inputParse = function()
 
 	if (kb[REWIND_KEY]) then
 		--load the last savestate saved
-		gui.text(1,1,"Savestate slot \("..math.floor((fc-earliestfc)/REPLAY_SAVESTATE_INTERVAL).."/"..math.floor((latestfc-earliestfc)/REPLAY_SAVESTATE_INTERVAL).."\)", "red")
+		gui.text(1,1,"Savestate slot ("..math.floor((fc-earliestfc)/REPLAY_SAVESTATE_INTERVAL).."/"..math.floor((latestfc-earliestfc)/REPLAY_SAVESTATE_INTERVAL)..")", "red")
 		local newfc = fc-(fc%SAVESTATE_INTERVAL)
 		if (fc-newfc <= 10) then -- if theres a small difference we should load the state before this, otherwise we're locked to one state
 			newfc=newfc-SAVESTATE_INTERVAL
@@ -91,7 +91,7 @@ local inputParse = function()
 	
 	if (kb[FORWARD_KEY]) then
 		--load the next savestate saved
-		gui.text(1,1,"Savestate slot \("..math.floor((fc-earliestfc)/REPLAY_SAVESTATE_INTERVAL).."/"..math.floor((latestfc-earliestfc)/REPLAY_SAVESTATE_INTERVAL).."\)", "red")
+		gui.text(1,1,"Savestate slot ("..math.floor((fc-earliestfc)/REPLAY_SAVESTATE_INTERVAL).."/"..math.floor((latestfc-earliestfc)/REPLAY_SAVESTATE_INTERVAL)..")", "red")
 		local newfc = fc+SAVESTATE_INTERVAL-(fc%SAVESTATE_INTERVAL)
 		if pauseframe then
 			pausemove = true
