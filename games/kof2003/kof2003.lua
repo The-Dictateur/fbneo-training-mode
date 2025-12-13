@@ -17,6 +17,10 @@ local startup_frames = 0
 local measuring_startup = false
 local was_in_hitstun = false
 local prev_start = false
+local hitstun_frames = 0
+local measuring_hitstun = false
+local recovery_frames = 0
+local measuring_recovery = false
 
 local p1health = {0x2FE91D, 0x2FEA1D, 0x2FEB1D}
 local p2health = {0x2FED1D, 0x2FEE1D, 0x2FEF1D}
@@ -29,6 +33,8 @@ local p2direction = {0x101B0F, 0x101E0F, 0x10210F}
 
 local p1combocounter = 0x2FE80F
 local p2combocounter = 0x2FEC0F
+
+local p1_state_base = 0x1011D7
 
 translationtable = {
 	"left",
@@ -91,6 +97,14 @@ function playerTwoInHitstun()
 	return rb(p1combocounter)~=0
 end
 
+function playerOneIoriStanding()
+	return rb(p1_state_base) == 0
+end
+
+function playerIoriOnePose()
+	return rb(p1_state_base)
+end
+
 function readPlayerOneHealth()
 	return rb(p1health[p1char])
 end
@@ -142,6 +156,55 @@ function Run() -- runs every frame
 		startStartupMeasurement()
 	end
 	prev_start = any_button
+
+	-- Detectar entrada en hitstun (hit confirmado)
+	if playerTwoInHitstun() and not was_in_hitstun then
+		print("Hit confirmed, start advantage measurement")
+		measuring_advantage = true
+		p2_hitstun_frames = 0
+		p1_recovery_frames = 0
+	end
+
+
+	if measuring_advantage then
+
+		-- Contar hitstun del P2
+		if playerTwoInHitstun() then
+			p2_hitstun_frames = p2_hitstun_frames + 1
+		end
+
+		-- Contar recovery del P1
+		if not playerOneIoriStanding() then
+			p1_recovery_frames = p1_recovery_frames + 1
+		end
+
+		-- Detectar si alguna vez la pose es 5
+		if playerIoriOnePose() == 5 then
+			pose5_detected = true
+		end
+
+		if playerIoriOnePose() == 122 then
+			pose122_detected = true
+		end
+
+		-- Cuando ambos ya han terminado
+		if not playerTwoInHitstun() and playerOneIoriStanding() then
+			local advantage = p2_hitstun_frames - p1_recovery_frames
+
+			-- Aplicar bonus si se detectó pose 5
+			if pose5_detected then
+				advantage = advantage + 6
+			end
+
+			if pose122_detected then
+				advantage = advantage + 1
+			end
+
+			print("Frame Advantage: " .. advantage)
+			measuring_advantage = false
+			pose5_detected = false  -- resetear para la siguiente medición
+		end
+	end
 	
 	-- Medición de startup
 	if measuring_startup then
@@ -149,7 +212,6 @@ function Run() -- runs every frame
 		if playerTwoInHitstun() and not was_in_hitstun then
 			startup_frames = startup_frames - 4
 			print("Startup: " .. startup_frames)
-			measuring_startup = false
 		end
 		was_in_hitstun = playerTwoInHitstun()
 	end
