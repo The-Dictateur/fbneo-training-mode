@@ -36,7 +36,7 @@ local p2combocounter = 0x2FEC0F
 
 -- Codigo standby IORI P1
 local iorip1_state_base = 0x1011D7
-local iorip2_state_base = 0x101C57
+local p2_state_base = 0x101C57
 
 -- P2Block
 local p2block = 0x101bdd
@@ -103,7 +103,7 @@ function playerTwoInHitstun()
 end
 
 function p2Blockstun()
-	local state = rb(iorip2_state_base)
+	local state = rb(p2_state_base)
 	return state == 11 or state == 12
 end
 
@@ -157,12 +157,16 @@ function playerOneIoriPose()
 end
 
 function playerTwoIoriStanding()
-	local state = rb(iorip2_state_base)
+	local state = rb(p2_state_base)
 	return state == 0 or state == 5 or state == 4
 end
 
 function playerTwoIoriPose()
-	return rb(iorip2_state_base)
+	return rb(p2_state_base)
+end
+
+function playerTwoBlockStand()
+	wb(p2_state_base, 2)
 end
 ------------------------------------
 
@@ -188,7 +192,7 @@ function Run() -- runs every frame
 		p1_recovery_frames = 0
 	end
 
-	if p2Blockstun() and not was_in_hitstun then
+	if p2Blockstun() and not was_in_blockstun then
 		measuring_block_advantage = true
 		p2_blockstun_frames = 0
 		p1_recovery_frames = 0
@@ -214,6 +218,7 @@ function Run() -- runs every frame
 	if measuring_block_advantage then
 		if p2Blockstun() then
 			p2_blockstun_frames = p2_blockstun_frames + 1
+			playerTwoBlockStand()
 		end
 		if not playerOneIoriStanding() then
 			p1_recovery_frames = p1_recovery_frames + 1
@@ -236,6 +241,7 @@ function Run() -- runs every frame
 		end
 		was_in_hitstun = playerTwoInHitstun()
 	end
+	was_in_blockstun = p2Blockstun()
 end
 
 -- Función para iniciar la medición de startup
