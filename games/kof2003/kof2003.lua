@@ -22,6 +22,10 @@ local measuring_hitstun = false
 local recovery_frames = 0
 local measuring_recovery = false
 
+local prev_p2_stun = 0
+local stun_before_hit = 0
+local stun_logged = false
+
 local p1health = {0x2FE91D, 0x2FEA1D, 0x2FEB1D}
 local p2health = {0x2FED1D, 0x2FEE1D, 0x2FEF1D}
 
@@ -40,6 +44,8 @@ local p2_state_base = 0x101C57
 
 -- P2Block
 local p2block = 0x101bdd
+
+local p2stun = 0x2FED21
 
 translationtable = {
 	"left",
@@ -168,14 +174,19 @@ end
 function playerTwoBlockStand()
 	wb(p2_state_base, 2)
 end
+
+function playerTwoStun()
+	return rb(p2stun)
+end
 ------------------------------------
 
 function Run() -- runs every frame
+	
 	infiniteTime()
 	p1char = rb(p1char_a)+1
 	p2char = rb(p2char_a)+1
-	print(playerTwoPose())
 
+	current_stun = playerTwoStun()
 	
 	-- Detectar input para iniciar medición (cualquiera de A, B, C, D)
 	local inputs = joypad.get()
@@ -188,6 +199,8 @@ function Run() -- runs every frame
 
 	-- Detectar entrada en hitstun (hit confirmado)
 	if playerTwoInHitstun() and not was_in_hitstun then
+		stun_before_hit = playerTwoStun()
+		stun_logged = false
 		measuring_advantage = true
 		p2_hitstun_frames = 0
 		p1_recovery_frames = 0
@@ -241,6 +254,19 @@ function Run() -- runs every frame
 			print("Startup: " .. startup_frames)
 		end
 		was_in_hitstun = playerTwoInHitstun()
+	end
+
+	if playerTwoInHitstun() and not stun_logged then
+		if current_stun < stun_before_hit then
+			local stun_loss = stun_before_hit - current_stun
+			print(string.format(
+				"Stun Damage: -%d (from %d to %d)",
+				stun_loss,
+				stun_before_hit,
+				current_stun
+			))
+			stun_logged = true
+		end
 	end
 	was_in_blockstun = p2Blockstun()
 end
