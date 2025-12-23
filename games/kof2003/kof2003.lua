@@ -44,7 +44,8 @@ local p2combocounter = 0x2FEC0F
 
 -- Code standby P1
 local p1_state_base = 0x1011D7
-local p2_state_base = 0x101C57
+--local p2_state_base = 0x101C57
+local p2_state_base = 0x2FED3F
 
 -- P2Block
 local p2block = 0x101bdd
@@ -173,7 +174,7 @@ end
 
 function p2Blockstun()
 	local state = rb(p2_state_base)
-	return state == 11 or state == 12
+	return state == 21 or state == 22 or state == 24 or state == 27 or state == 28
 end
 
 function p2Blockstunpose()
@@ -198,6 +199,7 @@ function Run() -- runs every frame
 	infiniteTime()
 	p1char = rb(p1char_a)+1
 	p2char = rb(p2char_a)+1
+	print (playerTwoPose())
 
 	current_stun = playerTwoStun()
 	current_guard = playerTwoGuard()
@@ -206,7 +208,6 @@ function Run() -- runs every frame
 	local inputs = joypad.get()
 	local any_button = inputs["P1 Button A"] or inputs["P1 Button B"] or inputs["P1 Button C"] or inputs["P1 Button D"]
 	if any_button and not prev_start then
-		print("Button detected, starting measurement")
 		startStartupMeasurement()
 	end
 	prev_start = any_button
@@ -248,16 +249,25 @@ function Run() -- runs every frame
 	if measuring_block_advantage then
 		if p2Blockstun() then
 			p2_blockstun_frames = p2_blockstun_frames + 1
-			playerTwoBlockStand()
 		end
+
 		if not playerOneStanding() then
 			p1_recovery_frames = p1_recovery_frames + 1
 		end
 
+		local pose = playerTwoPose()
+		if pose == 27 or pose == 28 then
+			bonus = true
+		end
+		
+
 		if not p2Blockstun() and playerOneStanding() then
 			local advantage = p2_blockstun_frames - p1_recovery_frames
+			if bonus then
+				advantage = advantage + 1
+			end
 			print("Block Frame Advantage: " .. advantage)
-
+			bonus = false
 			measuring_block_advantage = false
 		end
 	end
